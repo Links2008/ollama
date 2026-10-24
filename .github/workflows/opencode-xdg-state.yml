@@ -1,0 +1,30 @@
+name: OpenCode 状态目录验证
+on:
+  push:
+    branches: [proof/opencode-xdg-state]
+    paths: [.github/workflows/opencode-xdg-state.yml]
+permissions:
+  contents: read
+jobs:
+  verify:
+    if: github.repository == 'Links2008/ollama'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      CGO_ENABLED: '1'
+      GOTOOLCHAIN: local
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: 7a26ec68b2b827723abe938a332270f3acd9da9f
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: 完整启动集成测试
+        run: go test -p 2 -count=1 ./cmd/launch
+      - name: 静态检查
+        run: go vet ./cmd/launch
+      - name: 格式检查
+        run: test -z "$(gofmt -l cmd/launch/opencode.go cmd/launch/opencode_test.go cmd/launch/test_config_helpers_test.go)"
